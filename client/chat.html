@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Premium Chat</title>
+
+<script src="/socket.io/socket.io.js"></script>
+
+<!-- Google Font -->
+<link href="https://fonts.googleapis.com/css2?family=Poppins&display=swap" rel="stylesheet">
+
+<style>
+
+*{
+margin:0;
+padding:0;
+box-sizing:border-box;
+font-family:'Poppins',sans-serif;
+}
+
+body{
+background:linear-gradient(135deg,#0f2027,#203a43,#2c5364);
+height:100vh;
+display:flex;
+justify-content:center;
+align-items:center;
+}
+
+/* MAIN CONTAINER */
+.chat-app{
+width:95%;
+max-width:1200px;
+height:90vh;
+background:#111b21;
+border-radius:15px;
+display:flex;
+overflow:hidden;
+box-shadow:0 10px 40px rgba(0,0,0,0.5);
+}
+
+/* SIDEBAR */
+.sidebar{
+width:300px;
+background:#202c33;
+padding:20px;
+border-right:1px solid #2a3942;
+}
+
+.sidebar h2{
+color:#00a884;
+margin-bottom:15px;
+}
+
+.user{
+padding:10px;
+border-radius:10px;
+margin-bottom:8px;
+background:#2a3942;
+}
+
+/* CHAT AREA */
+.chat-area{
+flex:1;
+display:flex;
+flex-direction:column;
+}
+
+/* HEADER */
+.header{
+background:#202c33;
+padding:15px;
+font-size:18px;
+font-weight:bold;
+color:#00a884;
+}
+
+/* MESSAGES */
+.messages{
+flex:1;
+padding:20px;
+overflow-y:auto;
+display:flex;
+flex-direction:column;
+gap:10px;
+}
+
+/* MESSAGE BUBBLE */
+.message{
+max-width:60%;
+padding:12px 15px;
+border-radius:15px;
+position:relative;
+animation:fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn{
+from{opacity:0; transform:translateY(10px);}
+to{opacity:1; transform:translateY(0);}
+}
+
+.left{
+background:#202c33;
+align-self:flex-start;
+}
+
+.right{
+background:#005c4b;
+align-self:flex-end;
+}
+
+.time{
+font-size:10px;
+opacity:0.6;
+margin-top:5px;
+}
+
+/* INPUT AREA */
+.input-area{
+display:flex;
+padding:15px;
+background:#202c33;
+gap:10px;
+}
+
+.input-area input{
+flex:1;
+padding:12px;
+border:none;
+border-radius:10px;
+outline:none;
+background:#2a3942;
+color:white;
+}
+
+.input-area button{
+background:#00a884;
+border:none;
+padding:12px 20px;
+border-radius:10px;
+cursor:pointer;
+color:white;
+transition:0.3s;
+}
+
+.input-area button:hover{
+background:#02c39a;
+}
+
+/* SCROLLBAR */
+.messages::-webkit-scrollbar{
+width:5px;
+}
+.messages::-webkit-scrollbar-thumb{
+background:#00a884;
+border-radius:10px;
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="chat-app">
+
+<!-- SIDEBAR -->
+<div class="sidebar">
+<h2>Users</h2>
+<div id="users"></div>
+</div>
+
+<!-- CHAT -->
+<div class="chat-area">
+
+<div class="header">Realtime Chat</div>
+
+<div id="messages" class="messages"></div>
+
+<div class="input-area">
+<input id="msg" placeholder="Type a message...">
+<button onclick="send()">Send</button>
+</div>
+
+</div>
+</div>
+
+<script>
+
+const socket = io();
+const username = prompt("Enter your name");
+
+socket.emit("join", username);
+
+const msgBox = document.getElementById("msg");
+const messages = document.getElementById("messages");
+
+function send(){
+const text = msgBox.value;
+if(text.trim() === "") return;
+
+socket.emit("sendMessage", text);
+msgBox.value="";
+}
+
+/* RECEIVE MESSAGE */
+socket.on("message",(data)=>{
+
+const div = document.createElement("div");
+
+div.classList.add("message");
+div.classList.add(data.user === username ? "right":"left");
+
+div.innerHTML = `
+<b>${data.user}</b><br>
+${data.text}
+<div class="time">${data.time}</div>
+`;
+
+messages.appendChild(div);
+messages.scrollTop = messages.scrollHeight;
+
+});
+
+/* USERS LIST */
+socket.on("users",(list)=>{
+
+const userDiv = document.getElementById("users");
+userDiv.innerHTML="";
+
+list.forEach(u=>{
+const div=document.createElement("div");
+div.className="user";
+div.innerText=u;
+userDiv.appendChild(div);
+});
+
+});
+
+/* ENTER KEY SEND */
+msgBox.addEventListener("keypress",(e)=>{
+if(e.key==="Enter") send();
+});
+
+</script>
+
+</body>
+</html>
